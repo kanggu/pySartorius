@@ -3,9 +3,10 @@
 """
 Python Interface for
 Sartorius Serial Interface for
-EA, EB, GD, GE, TE scales.
+CPA, GCA and GPA scales.
 
-2010-2011 Robert Gieseke - robert.gieseke@gmail.com
+Originally by Robert Gieseke - robert.gieseke@gmail.com
+Modified by Zhen Kang Pang - zhenkangpang@gmail.com
 See LICENSE.
 """
 
@@ -15,14 +16,15 @@ class Sartorius(serial.Serial):
     def __init__(self, com_port):
         """
         Initialise Sartorius device.
-
             Example:
             scale = Sartorius('COM1')
         """
         serial.Serial.__init__(self, com_port)
         self.baudrate = 9600
-        self.bytesize = 7
+        self.bytesize = serial.SEVENBITS
         self.parity = serial.PARITY_ODD
+        self.stopbits = serial.STOPBITS_ONE
+        self.xonxoff = True
         self.timeout = 0.5
 
     def value(self):
@@ -31,11 +33,11 @@ class Sartorius(serial.Serial):
         """
         try:
             if self.inWaiting() == 0:
-                self.write('\033P\n')
-            answer = self.readline()
-            if len(answer) == 16: # menu code 7.1.1
+                self.write('\x1bP\r\n'.encode("ascii"))
+            answer = self.readline().decode("ascii")
+            if len(answer) == 16: # menu code 7.2.1
                 answer = float(answer[0:11].replace(' ', ''))
-            else: # menu code 7.1.2
+            else: # menu code 7.2.2
                 answer = float(answer[6:17].replace(' ',''))
             return answer
         except:
@@ -45,7 +47,7 @@ class Sartorius(serial.Serial):
         """
         Return unit.
         """
-        self.write('\033P\n')
+        self.write('\x1bP\r\n'.encode("ascii"))
         answer = self.readline()
         try:
             answer = answer[11].strip()
@@ -53,20 +55,32 @@ class Sartorius(serial.Serial):
             answer = ""
         return answer
 
-    def tara_zero(self):
+    def tare(self):
         """
-        Tara and zeroing combined.
+        (TARE) Key.
         """
-        self.write('\033T\n')
+        self.write('\x1bT\r\n'.encode("ascii"))
 
-    def tara(self):
+    def block(self):
         """
-        Tara.
+        Block keys.
         """
-        self.write('\033U\n')
+        self.write('\x1bO\r\n'.encode("ascii"))
 
-    def zero(self):
+    def unblock(self):
         """
-        Zero.
+        Unblock Keys.
         """
-        self.write('\033V\n')
+        self.write('x1bR\r\n'.encode("ascii"))
+
+    def restart(self):
+        """
+        Restart/self-test.
+        """
+        self.write('x1bS\r\n'.encode("ascii"))
+
+    def ical(self):
+        """
+        Internal calibration/adjustment.
+        """
+        self.write('x1bZ\r\n'.encode("ascii"))
