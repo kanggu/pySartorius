@@ -18,5 +18,5 @@ pySerial - <http://pyserial.sourceforge.net/>
 
 ### Manual:
 Sartorius - Description of the Interface
-for EA, EB, GD, GE and TE Balances/Scales
+CPA, GCA and GPA Balances/Scales
 
